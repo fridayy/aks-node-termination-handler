@@ -1,0 +1,7 @@
+         |                  |    |
+   _` |  |  /   __|  __ \   __|  __ \
+  (   |    <  \__ \  |   |  |    | | |
+ \__,_| _|\_\ ____/ _|  _| \__| _| |_|
+aks-note-termination-handler
+github: https://github.com/fridayy/aks-node-termination-handler
+version: {{ .Chart.Name }}-{{ .Chart.Version }}

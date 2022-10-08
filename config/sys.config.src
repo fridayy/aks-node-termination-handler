@@ -1,0 +1,25 @@
+[
+  %% aksnth config
+  {aksnth, [
+    {azure_metadata_service_url, "${AZURE_METADATA_SERVICE_URL:-http://169.254.169.254}"},
+    {poll_interval, "${POLL_INTERVAL:-1000}"},
+    {node_name, "${NODE_NAME}"},
+    {namespace, "${NAMESPACE}"},
+    {pod_name, "${POD_NAME}"},
+    {actions, [
+      aksnth_action_kube_event,
+      aksnth_action_drain_node,
+      aksnth_action_webhook
+    ]},
+    {metadata_module, ${METADATA_MODULE:-aksnth_metadata_azure}}
+  ]},
+  %% kernel config
+  {kernel,
+    %% logging
+    [
+      {logger_level, ${LOG_LEVEL:-info}},
+      {logger,
+        [{handler, default, logger_std_h,
+          #{formatter => {logger_formatter, #{single_line => true}}}}
+        ]}]}
+].

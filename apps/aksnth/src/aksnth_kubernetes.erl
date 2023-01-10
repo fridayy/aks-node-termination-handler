@@ -15,7 +15,6 @@
 
 -define(TABLE, aksnth_kubernetes_server_cfg).
 
-
 in_cluster() ->
     case ets:info(?TABLE) of
         undefined ->

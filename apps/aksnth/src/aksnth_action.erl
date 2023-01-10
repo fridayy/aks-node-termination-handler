@@ -19,8 +19,6 @@
     handle_continue/2
 ]).
 
--define(SERVER, ?MODULE).
-
 -callback process(map()) -> ok.
 -callback enabled() -> boolean().
 

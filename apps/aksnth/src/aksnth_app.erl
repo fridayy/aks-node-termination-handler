@@ -13,6 +13,8 @@ start(_StartType, _StartArgs) ->
     logger:info("Starting aks node termination handler version 0.0.1"),
     log_env(),
     boot_cowboy(),
+    aksnth_kubernetes:in_cluster(),
+    logger:info("Kuberlnetes initialized"),
     aksnth_sup:start_link().
 
 stop(_State) ->

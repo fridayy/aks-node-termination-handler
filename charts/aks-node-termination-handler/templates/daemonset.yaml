@@ -13,6 +13,7 @@ spec:
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
+        cluster-autoscaler.kubernetes.io/daemonset-pod: "true"
       {{- end }}
       labels:
         {{- include "aks-node-termination-handler.selectorLabels" . | nindent 8 }}
@@ -82,3 +83,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      priorityClassName: system-node-critical

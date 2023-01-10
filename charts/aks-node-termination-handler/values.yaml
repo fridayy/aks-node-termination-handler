@@ -28,7 +28,8 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: { }
+podAnnotations:
+  cluster-autoscaler.kubernetes.io/daemonset-pod: "true"
 
 podSecurityContext: { }
 
@@ -53,6 +54,12 @@ tolerations:
     operator: "Equal"
     value: "spot"
     effect: "NoSchedule"
+  - key: CriticalAddonsOnly
+    operator: Exists
+  - effect: NoExecute
+    operator: Exists
+  - effect: NoSchedule
+    operator: Exists
 
 nodeSelector:
   kubernetes.azure.com/scalesetpriority: "spot"

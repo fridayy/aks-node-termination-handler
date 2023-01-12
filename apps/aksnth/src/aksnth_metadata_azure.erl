@@ -37,7 +37,7 @@ try_events() ->
 %% internal functions
 do_get(Url) ->
     case httpc:request(get, {Url, ?HTTP_HEADER}, ?HTTP_OPTS, []) of
-        {ok, {{_, 200, _}, _, []}} -> 
+        {ok, {{_, 200, _}, _, []}} ->
             logger:warning(#{event => recv_empty_response}),
             {error, empty_response};
         {ok, {{_, 200, _}, _, Body}} ->

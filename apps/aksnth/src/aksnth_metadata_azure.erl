@@ -38,6 +38,7 @@ try_events() ->
 do_get(Url) ->
     case httpc:request(get, {Url, ?HTTP_HEADER}, ?HTTP_OPTS, []) of
         {ok, {{_, 200, _}, _, Body}} ->
+            logger:debug(#{event => recv_response, body => Body}),
             {ok, decode(Body)};
         Else ->
             logger:error("Metadata service unexpectedly responded with: ~p", [Else]),

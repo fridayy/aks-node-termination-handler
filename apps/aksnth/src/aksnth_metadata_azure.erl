@@ -19,7 +19,8 @@
 -define(HTTP_OPTS, [{timeout, 3000}, {connect_timeout, 3000}]).
 -define(HTTP_HEADER, [{"Metadata", "true"}]).
 
--spec try_instance_information() -> {ok, aksnth_metadata:info_spec()} | {error, invalid_response}.
+-spec try_instance_information() ->
+    {ok, aksnth_metadata:info_spec()} | {error, invalid_response} | {error, empty_response}.
 try_instance_information() ->
     Url = base_url() ++ "/metadata/instance?api-version=" ++ ?API_VERSION_INSTANCE,
     do_get(Url).
@@ -29,7 +30,8 @@ instance_name() ->
     {ok, #{<<"compute">> := #{<<"name">> := Name}}} = try_instance_information(),
     Name.
 
--spec try_events() -> {ok, azure_metadata:event_spec()} | {error, invalid_response}.
+-spec try_events() ->
+    {ok, azure_metadata:event_spec()} | {error, invalid_response} | {error, empty_response}.
 try_events() ->
     Url = base_url() ++ "/metadata/scheduledevents?api-version=" ++ ?API_VERSION_EVENTS,
     do_get(Url).

@@ -6,6 +6,10 @@
 %%% 1. tainting the node with NoSchedule
 %%% 2. cordoning the node
 %%% 3. creating pod eviction events
+%%%
+%%% atm this steps (and the creation of eviction events) are sequential and blocking
+%%% operations.
+%%%
 %%% @end
 %%% Created : 27. Sep 2022 10:57 AM
 %%%-------------------------------------------------------------------

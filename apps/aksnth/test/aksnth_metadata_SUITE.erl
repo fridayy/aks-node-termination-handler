@@ -13,13 +13,16 @@
 
 %% fixtures
 all() ->
-    [{group, happy}].
+    [{group, happy}, {group, non_happy}].
 
 groups() ->
     [
         {happy, [parallel], [
             returns_expected_instance_data,
             returns_expected_events
+        ]},
+        {non_happy, [parallel], [
+            handles_empty_response
         ]}
     ].
 
@@ -44,6 +47,13 @@ routes(happy) ->
             {"/metadata/instance", happy_instance_h, []},
             {"/metadata/scheduledevents", happy_events_h, []}
         ]}
+    ]);
+routes(non_happy) ->
+    cowboy_router:compile([
+        {"localhost", [
+            {"/metadata/instance", happy_instance_h, []},
+            {"/metadata/scheduledevents", empty_response_event_h, []}
+        ]}
     ]).
 
 end_per_group(Name, _) ->
@@ -59,3 +69,6 @@ returns_expected_events(_) ->
         <<"DocumentIncarnation">> := 1,
         <<"Events">> := [#{<<"EventId">> := <<"9C3EE5B7-E5B5-4482-A07F-DD5C10DAA97A">>}]
     }} = aksnth_metadata:try_events().
+
+handles_empty_response(_) ->
+    {error, empty_response} = aksnth_metadata:try_events().

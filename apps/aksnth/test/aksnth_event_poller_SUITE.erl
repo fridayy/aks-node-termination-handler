@@ -34,15 +34,8 @@ end_per_testcase(_TestCase, _Config) ->
     meck:unload(aksnth_action_sup),
     ok.
 
-exists_on_normally_terminal_event(_) ->
-    meck:expect(aksnth_metadata, try_events, fun() ->
-        {ok, #{
-            <<"DocumentIncarnation">> => 0,
-            <<"Events">> => [
-                #{<<"EventId">> => <<"Id">>, <<"Resources">> => [<<"some-instance">>]}
-            ]
-        }}
-    end),
+exits_normally_on_terminal_event(_) ->
+    meck:expect(aksnth_metadata, try_events, fun() -> do_valid_event_response() end),
     process_flag(trap_exit, true),
     {ok, Pid} = aksnth_event_poller:start_link(),
     receive
@@ -51,6 +44,18 @@ exists_on_normally_terminal_event(_) ->
         exit("fail")
     end.
 
+exits_does_ignore_empty_responses(_) ->
+    meck:expect(
+        aksnth_metadata,
+        try_events,
+        0,
+        meck:seq([
+            meck:exec(fun() -> {error, empty_response} end),
+            meck:exec(fun() -> do_valid_event_response() end)
+        ])
+    ),
+    do_start_and_assert_shutdown(normal).
+
 keeps_polling_if_events_does_not_concern_this_vm(_) ->
     meck:expect(
         aksnth_metadata,
@@ -58,28 +63,13 @@ keeps_polling_if_events_does_not_concern_this_vm(_) ->
         0,
         meck:seq([
             meck:exec(fun() ->
-                {ok, #{
-                    <<"DocumentIncarnation">> => 0,
-                    <<"Events">> => [
-                        #{<<"EventId">> => <<"Id">>, <<"Resources">> => [<<"not-me">>]}
-                    ]
-                }}
+                do_valid_event_response(0, <<"not-me">>)
             end),
             meck:exec(fun() ->
-                {ok, #{
-                    <<"DocumentIncarnation">> => 1,
-                    <<"Events">> => [
-                        #{<<"EventId">> => <<"Id">>, <<"Resources">> => [<<"not-me">>]}
-                    ]
-                }}
+                do_valid_event_response(1, <<"not-me">>)
             end),
             meck:exec(fun() ->
-                {ok, #{
-                    <<"DocumentIncarnation">> => 2,
-                    <<"Events">> => [
-                        #{<<"EventId">> => <<"Id">>, <<"Resources">> => [<<"not-me">>]}
-                    ]
-                }}
+                do_valid_event_response(2, <<"not-me">>)
             end)
         ])
     ),
@@ -88,3 +78,29 @@ keeps_polling_if_events_does_not_concern_this_vm(_) ->
     Calls = meck:num_calls(aksnth_metadata, try_events, []),
     true = Calls >= 2,
     true = is_process_alive(Pid).
+
+%% help fns
+do_valid_event_response() ->
+    {ok, #{
+        <<"DocumentIncarnation">> => 0,
+        <<"Events">> => [
+            #{<<"EventId">> => <<"Id">>, <<"Resources">> => [<<"some-instance">>]}
+        ]
+    }}.
+do_valid_event_response(Incarnation, Name) when is_integer(Incarnation) andalso is_binary(Name) ->
+    {ok, #{
+        <<"DocumentIncarnation">> => Incarnation,
+        <<"Events">> => [
+            #{<<"EventId">> => <<"Id">>, <<"Resources">> => [Name]}
+        ]
+    }}.
+
+do_start_and_assert_shutdown(Reason) ->
+    process_flag(trap_exit, true),
+    {ok, Pid} = aksnth_event_poller:start_link(),
+    receive
+        {'EXIT', Pid, Reason} -> ok;
+        Else -> exit({fail, Else})
+    after 2000 ->
+        exit("fail")
+    end.

@@ -64,25 +64,23 @@ handle_cast(_Request, State = #state{}) ->
     {noreply, State}.
 
 handle_info(poll, #state{poll_interval = PollInterval} = State) ->
-    {ok, #{<<"DocumentIncarnation">> := Incarnation, <<"Events">> := Events}} = aksnth_metadata:try_events(),
-    logger:debug("Received events: ~p [Incarnation:~p]", [Events, Incarnation]),
-    case is_new_incarnation(Incarnation, State) of
-        true ->
-            case events_concerning_this_vm(Events, State) of
-                [] ->
-                    %% no events regarding this virtual machine - keep polling
-                    poll(PollInterval),
-                    {noreply, State#state{last_incarnation = Incarnation}};
-                [Event | _] ->
-                    %% there is an events for this vm
-                    logger:warning("Received terminal event: ~p", [Event]),
-                    aksnth_action_sup:start_configured_actions(Event),
-                    logger:info("Actions started"),
-                    {stop, normal, State#state{last_incarnation = Incarnation}}
-            end;
-        false ->
+    case aksnth_metadata:try_events() of
+        {ok, Response} ->
+            handle_events(Response, State);
+        {error, empty_response} ->
+            %% as empty responses are common from the azure metadata api
+            %% they are handled here instead of "let it crash". The main reason
+            %% for this is to decrease reaction time if an actual terminal event is returned
+            logger:warning(#{
+                event => recv_empty_response,
+                message => "Received an empty response from metadata service",
+                action => skip
+            }),
             poll(PollInterval),
-            {noreply, State#state{last_incarnation = Incarnation}}
+            {noreply, State};
+        {error, Reason} ->
+            % crash on every other response
+            {stop, Reason, State}
     end;
 handle_info(_Info, State = #state{}) ->
     {noreply, State}.
@@ -107,3 +105,27 @@ events_concerning_this_vm(Events, #state{instance_name = Name}) ->
         end,
         Events
     ).
+
+handle_events(
+    #{<<"DocumentIncarnation">> := Incarnation, <<"Events">> := Events},
+    #state{poll_interval = PollInterval} = State
+) ->
+    logger:debug("Received events: ~p [Incarnation:~p]", [Events, Incarnation]),
+    case is_new_incarnation(Incarnation, State) of
+        true ->
+            case events_concerning_this_vm(Events, State) of
+                [] ->
+                    %% no events regarding this virtual machine - keep polling
+                    poll(PollInterval),
+                    {noreply, State#state{last_incarnation = Incarnation}};
+                [Event | _] ->
+                    %% there is an events for this vm
+                    logger:warning("Received terminal event: ~p", [Event]),
+                    aksnth_action_sup:start_configured_actions(Event),
+                    logger:info("Actions started"),
+                    {stop, normal, State#state{last_incarnation = Incarnation}}
+            end;
+        false ->
+            poll(PollInterval),
+            {noreply, State#state{last_incarnation = Incarnation}}
+    end.

@@ -46,7 +46,7 @@ resources:
     memory: 256Mi
   requests:
     cpu: 50m
-    memory: 128Mi
+    memory: 256Mi
 
 ## run on spot instance nodes only
 tolerations:

@@ -60,8 +60,8 @@ put_env(Key, Value) ->
 all() -> application:get_all_env(aksnth).
 
 -spec is_defined(Key) -> Result when
-      Key :: atom(),
-      Result :: boolean().
+    Key :: atom(),
+    Result :: boolean().
 is_defined(Key) ->
     case get_env(Key, undefined) of
         undefined -> false;

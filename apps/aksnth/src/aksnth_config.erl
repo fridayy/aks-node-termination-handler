@@ -10,7 +10,7 @@
 -author("bnjm").
 
 %% API
--export([get_env/2, get_env/1, put_env/2, get_env_ensure/2, all/0]).
+-export([get_env/2, get_env/1, put_env/2, get_env_ensure/2, all/0, is_defined/1]).
 
 -type options() ::
     node_name
@@ -25,6 +25,8 @@
 get_env(Key, Default) ->
     case application:get_env(aksnth, Key) of
         undefined -> Default;
+        %% an empty string is considered as an absence
+        {ok, []} -> Default;
         {ok, Result} -> Result
     end.
 
@@ -32,12 +34,13 @@ get_env(Key, Default) ->
     Key :: options().
 get_env(Key) ->
     case get_env(Key, undefined) of
-        undefined -> error(not_set);
+        undefined -> error({not_set, Key});
         Else -> Else
     end.
 
 %% @doc
 %% Ensures the returned result is transformed into the given datatype.
+%% @end
 -spec get_env_ensure(Key, DataType) -> Result when
     Key :: atom(),
     DataType :: integer | string | atom | binary,
@@ -46,13 +49,23 @@ get_env_ensure(Key, DataType) -> do_ensure(get_env(Key), DataType).
 
 do_ensure(Value, integer) when is_list(Value) -> erlang:list_to_integer(Value);
 do_ensure(Value, integer) when is_integer(Value) -> Value;
-do_ensure(Value, binary) when is_list(Value) -> erlang:list_to_binary(Value).
+do_ensure(Value, binary) when is_list(Value) -> erlang:list_to_binary(Value);
+do_ensure(Value, string) when is_list(Value) -> Value;
+do_ensure(Value, string) when is_binary(Value) -> erlang:binary_to_list(Value).
 
 %% should be used with care / in tests only
-%% as persistent_term updates are expensive.
 put_env(Key, Value) ->
     application:set_env(aksnth, Key, Value).
 
 all() -> application:get_all_env(aksnth).
+
+-spec is_defined(Key) -> Result when
+      Key :: atom(),
+      Result :: boolean().
+is_defined(Key) ->
+    case get_env(Key, undefined) of
+        undefined -> false;
+        _ -> true
+    end.
 
 %% internal

@@ -49,6 +49,7 @@ init(_) ->
         #{
             id => aksnth_action,
             start => {aksnth_action, start_link, []},
+            %% only restart action if terminated abnormally
             restart => transient,
             type => worker
         }
@@ -57,8 +58,9 @@ init(_) ->
     {ok, {
         #{
             strategy => simple_one_for_one,
-            intensity => 5,
-            period => 30
+            %% retry a failed action 3 times at most
+            intensity => 3,
+            period => 60
         },
         ChildSpec
     }}.

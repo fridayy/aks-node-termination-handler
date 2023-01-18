@@ -23,8 +23,8 @@ $ helm install aksnth aksnth/aks-node-termination-handler -n aksnth
   for [Scheduled Terminal Events](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events)
 * Creates a corresponding `v1beta.Event` [Kubernetes event](#event)
 * [Safely drains the node](#draining-the-node)
-* Optionally sends an `HTTP POST` request to a
-  configured [webhook url](https://kubernetes.io/docs/concepts/architecture/nodes/#manual-node-administration)
+* Optionally pushes a metric via `HTTP POST` to a
+  configured [promtheus push gateway](https://github.com/prometheus/pushgateway)
 
 ### Event
 
@@ -43,11 +43,17 @@ LAST SEEN   TYPE      REASON               OBJECT                               
 * [Cordoning](https://kubernetes.io/docs/concepts/architecture/nodes/#manual-node-administration) the node
 * Creating [PodEviction](https://kubernetes.io/docs/concepts/scheduling-eviction/api-eviction/) objects
 
-### Webhook
+## prometheus pushgateway
 
-`aksnth` forwards scheduled events to a configured URL as HTTP post request
-> not fully implemented yet
+If condfigured `aksnth` pushes a counter metric to a prometheus pushgateway in case of an eviction event:
 
+```
+# TYPE spot_instance_eviction_count counter
+spot_instance_eviction_count{
+ job = "aks-node-termination-handler", 
+ node = "aks-somespot-29758349-vmss_9",
+ instance = "aksnth-aks-node-termination-handler-dms9n"} 1
+```
 
 ## Configuration
 
@@ -55,6 +61,6 @@ LAST SEEN   TYPE      REASON               OBJECT                               
 |--------------------------|---------------------------------------------------------------------------------------------------|-----------------|
 | `mock.enabled`           | In mock mode scheduled preempt events can be simulated by using the `/simulate-eviction` endpoint | `false`         |
 | `poll.interval`          | The interval (in milliseconds) used for polling the scheduled events API                          | `1000`          |
-| `webhook.url`            | URL the scheduled event should be forwarded to                                                    | `""`            |
-| `webhook.secretName`     | Name to the secret that contains the webhook URL `webhookurl`                                     | `""`            |
+| `pushgateway.enabled`    | Enables pushing a corresponding eviction metric to a prometheus pushgateway                       | `false`            |
+| `pushgateway.url`        | Metrics URL of the prometheus push gateway (e.g `pushgateway:9091.monitoring.svc.cluster.local/metrics`)                                                   | `""`            |
 

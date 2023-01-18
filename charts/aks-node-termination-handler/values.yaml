@@ -72,3 +72,9 @@ webhook:
   url: ""
   # Webhook URL will be fetched from the secret store using the given name.
   secretName: ""
+
+pushgateway:
+  enabled: false
+    # Url to the prometheus pushgateway 
+    # e.g: prometheus-pushgateway.monitoring.svc.cluster.local:9091/metrics
+  url: ""

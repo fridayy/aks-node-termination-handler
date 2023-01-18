@@ -23,8 +23,8 @@
 %% TODO: proper spec for azure scheduled events
 -export_type([info_spec/0, event_spec/0]).
 
--type info_spec() :: #{}.
--type event_spec() :: #{}.
+-type info_spec() :: #{}. %% TODO: create spec according to azure documentation
+-type event_spec() :: #{}. %% TODO: create spec according to azure documentation
 
 init() ->
     Mod = impl(),

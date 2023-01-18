@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author bnjm
-%%% @copyright (C) 2022, <COMPANY>
+%%% @copyright (C) 2022, leftshift.one software gmbh
 %%% @doc
 %%%
 %%% @end

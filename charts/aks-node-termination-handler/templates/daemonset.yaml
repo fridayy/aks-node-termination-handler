@@ -13,7 +13,6 @@ spec:
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
-        cluster-autoscaler.kubernetes.io/daemonset-pod: "true"
       {{- end }}
       labels:
         {{- include "aks-node-termination-handler.selectorLabels" . | nindent 8 }}
@@ -47,6 +46,10 @@ spec:
             {{- if .Values.mock.enabled }}
             - name: METADATA_MODULE
               value: "aksnth_metadata_mock"
+            {{- end }}
+            {{- if .Values.pushgateway.enabled }}
+            - name: PROMETHEUS_PUSHGATEWAY_URL
+              value: {{ .Values.pushgateway.url | quote }}
             {{- end }}
             # attributions to the guys at https://github.com/aws/aws-node-termination-handler
             - name: WEBHOOK_URL

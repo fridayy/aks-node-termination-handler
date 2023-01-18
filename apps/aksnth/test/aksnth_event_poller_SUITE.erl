@@ -16,6 +16,7 @@ all() -> ct_help:all(?MODULE).
 
 init_per_suite(Config) ->
     aksnth_config:put_env(poll_interval, 50),
+    aksnth_config:put_env(azure_metadata_service_url, "http://localhost"),
     Config.
 
 end_per_suite(_Config) ->

@@ -55,7 +55,7 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Release
-        run: make release
+        run: ./bin/release.sh
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.4.0

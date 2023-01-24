@@ -20,6 +20,7 @@
 
 %% API
 -export([process/1, enabled/0]).
+-include_lib("kernel/include/logger.hrl").
 
 -define(KUBE_OPTS, #{server => aksnth_kubernetes:in_cluster()}).
 
@@ -27,14 +28,16 @@ enabled() -> true.
 
 process(Event) ->
     NodeName = aksnth_config:get_env(node_name),
-    logger:info("Will proceed to safely drain node '~p'", [NodeName]),
     Node = read_node(NodeName),
-    logger:info("Tainting node '~p'", [NodeName]),
+    ?LOG_DEBUG(#{event => taint_node, node => NodeName, action => ?MODULE}),
     ok = taint(Node, Event),
-    logger:info("Cordoning node '~p'", [NodeName]),
+    ?LOG_INFO(#{event => tainted_node, node => NodeName, action => ?MODULE}),
+    ?LOG_DEBUG(#{event => codon_node, node => NodeName, action => ?MODULE}),
     ok = cordon(NodeName),
-    logger:info("Draining node '~p'", [NodeName]),
+    ?LOG_INFO(#{event => codoned_node, node => NodeName, action => ?MODULE}),
+    ?LOG_DEBUG(#{event => drain_node, node => NodeName, action => ?MODULE}),
     ok = drain(NodeName),
+    ?LOG_INFO(#{event => drained_node, node => NodeName, action => ?MODULE}),
     ok.
 
 %% internal functions
@@ -78,7 +81,11 @@ cordon(NodeName) ->
 
 drain(NodeName) ->
     DeletablePods = get_pod_deletion_candidates(NodeName),
-    logger:info("~p pods are subject to deletion", [length(DeletablePods)]),
+    ?LOG_INFO(#{
+        event => identified_pod_deletion_candidates,
+        count => length(DeletablePods),
+        action => ?MODULE
+    }),
     lists:foreach(fun create_eviction_obj/1, DeletablePods),
     ok.
 
@@ -89,10 +96,11 @@ create_eviction_obj(#{<<"metadata">> := #{<<"namespace">> := PodNamespace, <<"na
         <<"apiVersion">> => <<"policy/v1beta1">>
     },
     Path = <<"/api/v1/namespaces/", PodNamespace/binary, "/pods/", PodName/binary, "/eviction">>,
+    ?LOG_DEBUG(#{event => create_eviction_obj, pod => PodName, namespace => PodNamespace}),
     ok = aksnth_kubernetes:create(
         #{path => erlang:binary_to_list(Path), body => Eviction}, ?KUBE_OPTS
     ),
-    logger:info("Created eviction object for '~p' in namespace '~p'", [PodName, PodNamespace]),
+    ?LOG_INFO(#{event => created_eviction_obj, pod => PodName, namespace => PodNamespace}),
     ok.
 
 get_pod_deletion_candidates(NodeName) ->
@@ -116,7 +124,7 @@ is_deletion_candidate(#{
     ),
     if
         HasDaemonSetRef ->
-            logger:info("Skipping pod '~p' as it is controlled by a DaemonSet", [PodName]);
+            ?LOG_INFO(#{event => skip_daemonset_pod, pod => PodName, action => ?MODULE});
         true ->
             ignore
     end,

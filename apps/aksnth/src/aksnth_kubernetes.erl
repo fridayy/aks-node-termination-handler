@@ -13,17 +13,20 @@
 
 -export([in_cluster/0, create/2, microtime_now/0, get/2, patch/2]).
 
+-include_lib("kernel/include/logger.hrl").
+
 -define(TABLE, aksnth_kubernetes_server_cfg).
 
 in_cluster() ->
-    case ets:info(?TABLE) of
-        undefined ->
-            ets:new(?TABLE, [set, public, named_table]),
-            ServerConfig = kuberlnetes:in_cluster(),
-            ets:insert(?TABLE, {ServerConfig}),
-            ServerConfig;
+    case aksnth_config:get_env(metadata_module) of
+        aksnth_metadata_mock ->
+            ?LOG_WARNING(#{
+                event => skip_kubernetes_module,
+                message => "Using mock mode - kubernetes module is non functional"
+            }),
+            ok;
         _ ->
-            ets:first(?TABLE)
+            use_cached_server_config()
     end.
 
 get(Path, Opts) ->
@@ -38,3 +41,15 @@ patch(Request, Opts) ->
 -spec microtime_now() -> binary().
 microtime_now() ->
     kuberlnetes:microtime_now().
+
+%% internal
+use_cached_server_config() ->
+    case ets:info(?TABLE) of
+        undefined ->
+            ets:new(?TABLE, [set, public, named_table]),
+            ServerConfig = kuberlnetes:in_cluster(),
+            ets:insert(?TABLE, {ServerConfig}),
+            ServerConfig;
+        _ ->
+            ets:first(?TABLE)
+    end.

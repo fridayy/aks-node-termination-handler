@@ -14,6 +14,8 @@
 %% API
 -export([process/1, enabled/0]).
 
+-include_lib("kernel/include/logger.hrl").
+
 enabled() -> true.
 
 process(#{<<"EventType">> := EventType, <<"NotBefore">> := NotBefore}) when
@@ -21,6 +23,7 @@ process(#{<<"EventType">> := EventType, <<"NotBefore">> := NotBefore}) when
 ->
     Server = aksnth_kubernetes:in_cluster(),
     NodeName = erlang:list_to_binary(aksnth_config:get_env(node_name)),
+    ?LOG_DEBUG(#{event => creating_kube_event, node => NodeName, action => ?MODULE}),
     ok = aksnth_kubernetes:create(
         #{
             path => "/apis/events.k8s.io/v1beta1/namespaces/default/events",
@@ -43,4 +46,6 @@ process(#{<<"EventType">> := EventType, <<"NotBefore">> := NotBefore}) when
             }
         },
         #{server => Server}
-    ).
+    ),
+    ?LOG_INFO(#{event => created_kube_event, node => NodeName, action => ?MODULE}),
+    ok.

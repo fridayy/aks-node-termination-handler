@@ -13,7 +13,6 @@
 -export([init/2]).
 
 init(#{method := <<"GET">>} = Req, State) ->
-    logger:debug("[GET] /health"),
     Res = cowboy_req:reply(
         200,
         #{<<"Content-Type">> => <<"application/json">>},

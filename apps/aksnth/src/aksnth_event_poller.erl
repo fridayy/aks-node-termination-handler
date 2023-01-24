@@ -53,8 +53,7 @@ init(_) ->
 
 handle_continue(start, #state{poll_interval = PollInterval} = State) ->
     aksnth_metadata:init(),
-    logger:info("Starting event poller with configured poll interval '~p ms'", [PollInterval]),
-    ?LOG_INFO(#{event => poller_initialize, interval => PollInterval}),
+    ?LOG_INFO(#{event => poller_initialize, message => "Starting metadata event poller with configured interval", interval => PollInterval}),
     InstanceName = aksnth_metadata:instance_name(),
     poll(PollInterval),
     ?LOG_INFO(#{event => poller_initialized, vm_name => InstanceName}),

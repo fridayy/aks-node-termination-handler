@@ -16,12 +16,11 @@
 
 -include_lib("kernel/include/logger.hrl").
 
-
-enabled() -> 
-  true.
+enabled() ->
+    true.
 
 process(_) ->
-  ?LOG_DEBUG(#{event => seting_metrics}),
-  aksnth_metrics:set_spot_node_unavailable(),
-  ?LOG_DEBUG(#{event => set_metrics}),
-  ok.
+    ?LOG_DEBUG(#{event => seting_metrics}),
+    aksnth_metrics:set_spot_node_unavailable(),
+    ?LOG_DEBUG(#{event => set_metrics}),
+    ok.

@@ -123,9 +123,16 @@ handle_events(
                     {noreply, State#state{last_incarnation = Incarnation}};
                 [Event | _] ->
                     %% there is an events for this vm
-                    ?LOG_WARNING(#{event => recv_eviction_event, message => "Received terminmal event", the_event => Event}),
+                    ?LOG_WARNING(#{
+                        event => recv_eviction_event,
+                        message => "Received terminmal event",
+                        the_event => Event
+                    }),
                     aksnth_action_sup:start_configured_actions(Event),
-                    ?LOG_INFO(#{event => starting_post_eviction_event_actions, message => "Starting post eviction event actions"}),
+                    ?LOG_INFO(#{
+                        event => starting_post_eviction_event_actions,
+                        message => "Starting post eviction event actions"
+                    }),
                     {stop, normal, State#state{last_incarnation = Incarnation}}
             end;
         false ->

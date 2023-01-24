@@ -10,11 +10,10 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    logger:info("Starting aks node termination handler version 0.0.1"),
     log_env(),
     boot_cowboy(),
+    aksnth_metrics:init(),
     aksnth_kubernetes:in_cluster(),
-    logger:info("Kuberlnetes initialized"),
     aksnth_sup:start_link().
 
 stop(_State) ->
@@ -35,6 +34,7 @@ boot_cowboy() ->
     Routes = cowboy_router:compile([
         {'_', [
             {"/health", aksnth_route_health, []},
+            {"/metrics/[:registry]", prometheus_cowboy2_handler, []},
             {"/simulate-eviction", aksnth_route_simulate_eviction, []}
         ]}
     ]),

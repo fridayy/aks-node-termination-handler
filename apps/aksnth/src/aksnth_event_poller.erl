@@ -21,6 +21,8 @@
 
 -export_type([options/0]).
 
+-include_lib("kernel/include/logger.hrl").
+
 -define(SERVER, ?MODULE).
 
 -type options() :: #{
@@ -52,9 +54,10 @@ init(_) ->
 handle_continue(start, #state{poll_interval = PollInterval} = State) ->
     aksnth_metadata:init(),
     logger:info("Starting event poller with configured poll interval '~p ms'", [PollInterval]),
+    ?LOG_INFO(#{event => poller_initialize, interval => PollInterval}),
     InstanceName = aksnth_metadata:instance_name(),
     poll(PollInterval),
-    logger:info("Event poller initialized (vm-name: '~p')", [InstanceName]),
+    ?LOG_INFO(#{event => poller_initialized, vm_name => InstanceName}),
     {noreply, State#state{instance_name = InstanceName}}.
 
 handle_call(_Request, _From, State = #state{}) ->
@@ -107,10 +110,10 @@ events_concerning_this_vm(Events, #state{instance_name = Name}) ->
     ).
 
 handle_events(
-    #{<<"DocumentIncarnation">> := Incarnation, <<"Events">> := Events},
+    #{<<"DocumentIncarnation">> := Incarnation, <<"Events">> := Events} = Ev,
     #state{poll_interval = PollInterval} = State
 ) ->
-    logger:debug("Received events: ~p [Incarnation:~p]", [Events, Incarnation]),
+    ?LOG_DEBUG(#{event => recv_metadata_event, the_event => Ev}),
     case is_new_incarnation(Incarnation, State) of
         true ->
             case events_concerning_this_vm(Events, State) of
@@ -120,9 +123,9 @@ handle_events(
                     {noreply, State#state{last_incarnation = Incarnation}};
                 [Event | _] ->
                     %% there is an events for this vm
-                    logger:warning("Received terminal event: ~p", [Event]),
+                    ?LOG_WARNING(#{event => recv_eviction_event, message => "Received terminmal event", the_event => Event}),
                     aksnth_action_sup:start_configured_actions(Event),
-                    logger:info("Actions started"),
+                    ?LOG_INFO(#{event => starting_post_eviction_event_actions, message => "Starting post eviction event actions"}),
                     {stop, normal, State#state{last_incarnation = Incarnation}}
             end;
         false ->

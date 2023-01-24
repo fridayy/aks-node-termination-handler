@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    {{- include "aks-node-termination-handler.labels" . | nindent 4 }}
+    {{- with .Values.podMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  name: {{ include "aks-node-termination-handler.fullname" . }}
+  namespace: {{ default .Release.Namespace .Values.podMonitor.namespace }}
+spec:
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      {{- with .Values.podMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+  {{- with .Values.podMonitor.sampleLimit }}
+  sampleLimit: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "aks-node-termination-handler.selectorLabels" . | nindent 8 }}

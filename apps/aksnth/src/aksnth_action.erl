@@ -19,6 +19,8 @@
     handle_continue/2
 ]).
 
+-include_lib("kernel/include/logger.hrl").
+
 -callback process(map()) -> ok.
 -callback enabled() -> boolean().
 
@@ -28,10 +30,6 @@
     %% the event to be handled by this action
     event :: map()
 }).
-
-%%%===================================================================
-%%% Spawning and gen_server implementation
-%%%===================================================================
 
 start_link(Module, Event) ->
     gen_server:start_link(?MODULE, [Module, Event], []).
@@ -45,9 +43,9 @@ init([Module, Event]) ->
         {continue, process_event}}.
 
 handle_continue(process_event, #state{module = Module, event = Event} = State) ->
-    logger:info("[~p] Processing event: ~p", [Module, Event]),
+    ?LOG_INFO(#{event => process_event, action => Module, the_event => Event}),
     Module:process(Event),
-    logger:info("[~p] Event processed", [Module]),
+    ?LOG_INFO(#{event => processed_event, action => Module, the_event => Event}),
     {stop, normal, State}.
 
 handle_call(_Request, _From, State = #state{}) ->
@@ -65,6 +63,4 @@ terminate(_Reason, _State = #state{}) ->
 code_change(_OldVsn, State = #state{}, _Extra) ->
     {ok, State}.
 
-%%%===================================================================
-%%% Internal functions
-%%%===================================================================
+%% internal

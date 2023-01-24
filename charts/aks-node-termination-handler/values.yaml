@@ -66,6 +66,11 @@ nodeSelector:
 
 affinity: { }
 
+podMonitor:
+  enabled: false
+  interval: "15s"
+  labels: {}
+
 # attributions to the guys at https://github.com/aws/aws-node-termination-handler
 # webhookURL if specified, posts event data to URL upon instance interruption action.
 webhook:

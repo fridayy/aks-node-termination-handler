@@ -23,8 +23,6 @@ $ helm install aksnth aksnth/aks-node-termination-handler -n aksnth
   for [Scheduled Terminal Events](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events)
 * Creates a corresponding `v1beta.Event` [Kubernetes event](#event)
 * [Safely drains the node](#draining-the-node)
-* Optionally pushes a metric via `HTTP POST` to a
-  configured [promtheus push gateway](https://github.com/prometheus/pushgateway)
 
 ### Event
 
@@ -43,17 +41,41 @@ LAST SEEN   TYPE      REASON               OBJECT                               
 * [Cordoning](https://kubernetes.io/docs/concepts/architecture/nodes/#manual-node-administration) the node
 * Creating [PodEviction](https://kubernetes.io/docs/concepts/scheduling-eviction/api-eviction/) objects
 
-## prometheus pushgateway
+## Metrics
 
-If condfigured `aksnth` pushes a counter metric to a prometheus pushgateway in case of an eviction event:
+`aksnth` exposes the following metrics on the `/metrics` endpoint:
 
 ```
-# TYPE spot_instance_eviction_count counter
-spot_instance_eviction_count{
- job = "aks-node-termination-handler", 
- node = "aks-somespot-29758349-vmss_9",
- instance = "aksnth-aks-node-termination-handler-dms9n"} 1
+# TYPE aksnth_spot_node_available gauge
+aksnth_spot_node_available{
+   container="aks-node-termination-handler", 
+   endpoint="http", 
+   instance="10.244.0.2:8080", 
+   job="aksnth/aksnth-aks-node-termination-handler", 
+   namespace="aksnth", 
+   node="aks-somespotpool-38258973-vmss000001", 
+   pod="aksnth-aks-node-termination-handler-9jztg"
+} 1
 ```
+
+`aksnth_spot_node_available` is `1` until the node receives an eviction event. After that the value will be `0`.
+
+```
+# TYPE aksnth_spot_node_eviction_imminent gauge
+aksnth_spot_node_eviction_imminent{
+  container="aks-node-termination-handler", 
+  endpoint="http", 
+  instance="10.244.0.2:8080", 
+  job="aksnth/aksnth-aks-node-termination-handler", 
+  namespace="aksnth", 
+  node="aks-dgsc4m16z1-38258973-vmss000001", 
+  pod="aksnth-aks-node-termination-handler-9jztg"
+} 0
+```
+
+`aksnth_spot_node_eviction_imminent` is `0` until the node receives an eviction event. After that the value will be `1`.
+
+
 
 ## Configuration
 
@@ -61,6 +83,8 @@ spot_instance_eviction_count{
 |--------------------------|---------------------------------------------------------------------------------------------------|-----------------|
 | `mock.enabled`           | In mock mode scheduled preempt events can be simulated by using the `/simulate-eviction` endpoint | `false`         |
 | `poll.interval`          | The interval (in milliseconds) used for polling the scheduled events API                          | `1000`          |
-| `pushgateway.enabled`    | Enables pushing a corresponding eviction metric to a prometheus pushgateway                       | `false`            |
-| `pushgateway.url`        | Metrics URL of the prometheus push gateway (e.g `pushgateway:9091.monitoring.svc.cluster.local/metrics`)                                                   | `""`            |
+| `podMonitor.enabled`     | Specfies if a promtheus pod monitor should be created                                             | `true`          |
+| `podMonitor.interval`    | Configures the pod monitor scrape interval to be used                                             | `15s`           |
+| `podMonitor.labels`      | Additional pod monitor labels                                                                     | `{}`            |
+
 

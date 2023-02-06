@@ -71,15 +71,3 @@ podMonitor:
   interval: "15s"
   labels: {}
 
-# attributions to the guys at https://github.com/aws/aws-node-termination-handler
-# webhookURL if specified, posts event data to URL upon instance interruption action.
-webhook:
-  url: ""
-  # Webhook URL will be fetched from the secret store using the given name.
-  secretName: ""
-
-pushgateway:
-  enabled: false
-    # Url to the prometheus pushgateway 
-    # e.g: prometheus-pushgateway.monitoring.svc.cluster.local:9091/metrics
-  url: ""

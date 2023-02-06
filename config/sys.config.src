@@ -6,12 +6,9 @@
     {node_name, "${NODE_NAME}"},
     {namespace, "${NAMESPACE}"},
     {pod_name, "${POD_NAME}"},
-    {prometheus_pushgateway_url, "${PROMETHEUS_PUSHGATEWAY_URL}"},
     {actions, [
       aksnth_action_kube_event,
       aksnth_action_drain_node,
-      aksnth_action_webhook,
-      aksnth_action_prometheus_push,
       aksnth_action_metrics
     ]},
     {metadata_module, ${METADATA_MODULE:-aksnth_metadata_azure}}

@@ -21,4 +21,4 @@ jobs:
           apt-get install -y make git
       - uses: actions/checkout@v3
       - name: Build and Test
-        run: ./bin/build.sh
+        run: make build

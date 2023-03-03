@@ -47,20 +47,6 @@ spec:
             - name: METADATA_MODULE
               value: "aksnth_metadata_mock"
             {{- end }}
-            {{- if .Values.pushgateway.enabled }}
-            - name: PROMETHEUS_PUSHGATEWAY_URL
-              value: {{ .Values.pushgateway.url | quote }}
-            {{- end }}
-            # attributions to the guys at https://github.com/aws/aws-node-termination-handler
-            - name: WEBHOOK_URL
-            {{- if .Values.webhook.secretName }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.webhook.secretName }}
-                  key: webhookurl
-            {{- else }}
-              value: {{ .Values.webhook.url | quote }}
-            {{- end }}
           ports:
             - name: http
               containerPort: 8080

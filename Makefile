@@ -22,6 +22,9 @@ build_release:
 release:
 	./bin/release.sh
 
+lint-chart:
+	helm lint ./charts/aks-node-termination-handler/
+
 .PHONY: clean
 clean:
 	rebar3 clean

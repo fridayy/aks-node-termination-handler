@@ -1,4 +1,4 @@
-FROM erlang:25-alpine as build
+FROM erlang:25-alpine  as build
 
 RUN mkdir /opt/aksnth
 WORKDIR /opt/aksnth
@@ -8,7 +8,9 @@ COPY . /opt/aksnth
 RUN apk add --update git  \
     && rebar3 as prod release
 
-FROM alpine:3.16 as application
+# ensure that the alpine version is the same
+# that the alpine version used in the build step
+FROM alpine:3.17 as application
 
 RUN apk add --no-cache openssl libstdc++ ncurses-libs && \
     adduser -h /opt/aksnth -u 1000 -s /bin/sh -D unprivileged

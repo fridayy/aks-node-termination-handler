@@ -24,9 +24,9 @@
 -export_type([info_spec/0, event_spec/0]).
 
 %% TODO: create spec according to azure documentation
--type info_spec() :: #{}.
+-type info_spec() :: #{binary() => binary() | map()}.
 %% TODO: create spec according to azure documentation
--type event_spec() :: #{}.
+-type event_spec() :: #{binary() => binary() | map()}.
 
 init() ->
     Mod = impl(),

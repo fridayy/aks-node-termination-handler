@@ -31,12 +31,12 @@
 
 -record(state, {
     %% the name of this virtual machine as acquired by the metadata service
-    instance_name :: string(),
+    instance_name :: binary() | undefined,
     %% the received document incarnation see:
     %% https://learn.microsoft.com/en-us/azure/virtual-machines/linux/scheduled-events#event-properties
-    last_incarnation :: non_neg_integer(),
+    last_incarnation :: non_neg_integer() | undefined,
     %% the configured poll interval - received as option
-    poll_interval :: non_neg_integer()
+    poll_interval :: non_neg_integer() | undefined
 }).
 
 -spec start_link() -> gen_server:start_ret().
@@ -44,14 +44,13 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 init(_) ->
-    PollInterval = aksnth_config:get_env_ensure(poll_interval, integer),
-    {ok,
-        #state{
-            poll_interval = PollInterval
-        },
-        {continue, start}}.
+    PollInterval = aksnth_config:get_env_ensure(poll_interval, non_neg_integer),
+    State = set_poll_interval(PollInterval, #state{}),
+    {ok, State, {continue, start}}.
 
 handle_continue(start, #state{poll_interval = PollInterval} = State) ->
+    %% todo: maybe move this to init instead of continue as the whole system is dependend
+    %% on the event poller anyway so it might as well block the supervision tree setup
     aksnth_metadata:init(),
     ?LOG_INFO(#{
         event => poller_initialize,
@@ -101,6 +100,11 @@ code_change(_OldVsn, State = #state{}, _Extra) ->
 poll(Interval) ->
     erlang:send_after(Interval, self(), poll).
 
+set_poll_interval(PollInterval, State) when
+    is_integer(PollInterval) andalso PollInterval > 0 andalso is_record(State, state)
+->
+    State#state{poll_interval = PollInterval}.
+
 is_new_incarnation(Incarnation, #state{last_incarnation = LastIncarnation}) ->
     Incarnation =/= LastIncarnation.
 
@@ -124,8 +128,9 @@ handle_events(
                     %% no events regarding this virtual machine - keep polling
                     poll(PollInterval),
                     {noreply, State#state{last_incarnation = Incarnation}};
-                [Event | _] ->
-                    %% there is an events for this vm
+                [#{<<"EventType">> := <<"Preempt">>} = Event | _] ->
+                    %% there is an preemption event for this vm
+                    %% the spot VM is lost
                     ?LOG_WARNING(#{
                         event => recv_eviction_event,
                         message => "Received terminmal event",
@@ -136,7 +141,16 @@ handle_events(
                         event => starting_post_eviction_event_actions,
                         message => "Starting post eviction event actions"
                     }),
-                    {stop, normal, State#state{last_incarnation = Incarnation}}
+                    {stop, normal, State#state{last_incarnation = Incarnation}};
+                [Event | _] ->
+                    %% catch all for other event types
+                    ?LOG_WARNING(#{
+                        event => recv_other_event,
+                        message => "Received other (unhandled) event",
+                        the_event => Event
+                    }),
+                    poll(PollInterval),
+                    {noreply, State#state{last_incarnation = Incarnation}}
             end;
         false ->
             poll(PollInterval),

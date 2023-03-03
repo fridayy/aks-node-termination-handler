@@ -1,6 +1,12 @@
 .PHONY: all
 all: build
 
+format:
+	rebar3 fmt
+
+check-types:
+	rebar3 gradualizer
+
 check-fmt:
 	rebar3 fmt --check
 
@@ -20,5 +26,4 @@ release: build_release
 clean:
 	rebar3 clean
 
-build: check-fmt compile test
-
+build: check-fmt check-types compile test

@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   aks-node-termination-handler:
   - apiVersion: v2
+    appVersion: 0.0.7
+    created: "2023-03-03T12:09:52.580402181Z"
+    description: A Helm chart for Kubernetes
+    digest: 966995e0844d36dc13da1a7d0b3c45b700b86bd0ee3a4ad10b2d90c62dd30973
+    name: aks-node-termination-handler
+    type: application
+    urls:
+    - https://github.com/fridayy/aks-node-termination-handler/releases/download/aks-node-termination-handler-0.0.7/aks-node-termination-handler-0.0.7.tgz
+    version: 0.0.7
+  - apiVersion: v2
     appVersion: 0.0.4
     created: "2023-01-24T10:48:28.301945581Z"
     description: A Helm chart for Kubernetes
@@ -41,4 +51,4 @@ entries:
     urls:
     - https://github.com/fridayy/aks-node-termination-handler/releases/download/aks-node-termination-handler-0.0.1/aks-node-termination-handler-0.0.1.tgz
     version: 0.0.1
-generated: "2023-01-24T10:48:28.301962581Z"
+generated: "2023-03-03T12:09:52.580512287Z"

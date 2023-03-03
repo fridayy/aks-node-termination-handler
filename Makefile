@@ -19,7 +19,7 @@ test:
 build_release:
 	rebar3 as prod release
 
-release: build_release
+release:
 	./bin/release.sh
 
 .PHONY: clean
